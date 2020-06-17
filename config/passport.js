@@ -21,7 +21,7 @@ passport.use(new LocalStratergy((username,password,done)=>{
             
         })
     })
-    .catch(e=>done(e))
+    .catch(err=>done(err))
 }))
 
 const cookieExtractor = req => {
@@ -36,7 +36,7 @@ passport.use(new JwtStratergy({
     jwtFromRequest: cookieExtractor,
     secretOrKey : process.env.JWT_SECRET
 },(payload,done)=>{
-    user._findOne({
+    users._findOne({
         query:{ "_id": payload.sub }
     })
     .then(userData=>{
