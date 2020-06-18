@@ -1,7 +1,9 @@
 const mongoose = require('mongoose');
 const promiseBasedQueries = require('./index')
 const q = require('q')
-const bcrypt = require('bcrypt')
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const {signRfToken} = require('../lib/utils')
 
 const UsersSchema = mongoose.Schema({
     email:{
@@ -11,6 +13,10 @@ const UsersSchema = mongoose.Schema({
     },
     password:{
         type: String
+    },
+    refreshTokens:{
+        type: Array,
+        default: []
     },
     pwSecure:{
         type: Boolean,
@@ -68,6 +74,20 @@ class Users extends promiseBasedQueries{
         // const hashVerify = crypto.pbkdf2Sync(clientPw, this.salt, 10000, 64, 'sha512').toString('hex')
         // promise.resolve(this.password === hashVerify)
 
+        return promise.promise
+    }
+
+    issueRefreshToken(){
+        let promise = q.defer()
+        const tokenRf = signRfToken(this._id)
+        this.refreshTokens = [...this.refreshTokens, tokenRf]
+        this._save()
+        .then(()=>{
+            promise.resolve(tokenRf)
+        })
+        .catch(e=>{
+            promise.reject(e)
+        })
         return promise.promise
     }
     

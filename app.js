@@ -12,6 +12,7 @@ const MONGODB_URL = process.env.MONGODB_URL;
 
 //middleware
 const app = express();
+
 app.use(cookieParser());
 app.use(express.json());
 
@@ -19,6 +20,7 @@ require('./config/passport')(passport)
 app.use(passport.initialize())
 
 app.use(cors());
+// app.use(require('./lib/utils').verifyToken);
 app.use(require('./routes'))
 
 //port
