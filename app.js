@@ -1,7 +1,7 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const mongoose = require("mongoose");
-const passport = require("passport")
+const passport = require('passport');
 const cors = require("cors");
 require('dotenv').config();
 const {users} = require("./models/users")
@@ -10,19 +10,22 @@ const {users} = require("./models/users")
 const port = process.env.PORT || 5000;
 const MONGODB_URL = process.env.MONGODB_URL;
 
-//server
+//middleware
 const app = express();
-app.use(cors());
 app.use(cookieParser());
 app.use(express.json());
+
+require('./config/passport')(passport)
+app.use(passport.initialize())
+
+app.use(cors());
 app.use(require('./routes'))
+
+//port
 app.listen(port, ()=>{
     console.log("SERVER RUNNING LO")
 })
 
-//auth
-// app.use(passport.initialize());
-// app.use(passport.session());
 
 //mongodb
 mongoose.connect( MONGODB_URL, 
@@ -38,6 +41,10 @@ dbConnection.once('open',()=>{
 })
 
 
+// error handling middleware
+function errorHandler (err , req, res, next){
 
+}
 
+app.use(errorHandler);
 

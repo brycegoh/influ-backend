@@ -2,16 +2,10 @@ const express = require('express');
 const router = express.Router();
 const jwt = require("jsonwebtoken");
 const passport = require("passport");
-const passportConfig = require("../config/passport");
 const {users} = require('../models/users');
+const {signToken} = require('../lib/utils')
 require('dotenv').config();
 
-const signToken = (userId) => {
-    return jwt.sign({
-        iss : process.env.JWT_ISSUER,
-        sub: userId
-    },process.env.JWT_SECRET, {expiresIn: "12h"});
-}
 
 router.post('/register',(req,res)=>{
     let userData = req.body
@@ -74,6 +68,15 @@ router.post('/login', passport.authenticate('local',{session:false}) ,(req,res)=
 
 router.get('/logout', passport.authenticate('jwt',{session:false}) ,(req,res)=>{
     res.clearCookie('access_token')
+    res.json({user:{
+            email:"", 
+            userType:""
+        },
+        successFlag: true
+    })
+})
+
+router.get('/get-projects', passport.authenticate('jwt',{session:false}) ,(req,res)=>{
     res.json({user:{
             email:"", 
             userType:""

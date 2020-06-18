@@ -38,6 +38,11 @@ UsersSchema.pre('save',function(next){
     if(!this.isModified('password')){
         return next();
     }
+
+    // const salt = crypto.randomBytes(32).toString('hex')
+    // const hash = crypto.pbkdf2Sync(this.password, salt, 10000, 64, 'sha512').toString('hex')
+    // need store salt
+
     bcrypt.hash(this.password,10,(error, hashedPw)=>{
         if(error){
             return next(error)
@@ -59,6 +64,10 @@ class Users extends promiseBasedQueries{
                 promise.resolve(isMatch)
             }
         })
+
+        // const hashVerify = crypto.pbkdf2Sync(clientPw, this.salt, 10000, 64, 'sha512').toString('hex')
+        // promise.resolve(this.password === hashVerify)
+
         return promise.promise
     }
     

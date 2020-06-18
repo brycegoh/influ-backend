@@ -3,7 +3,14 @@ const LocalStratergy = require("passport-local").Strategy;
 const JwtStratergy = require("passport-jwt").Strategy;
 const {users} = require("../models/users");
 require('dotenv').config();
-passport.use(new LocalStratergy((username,password,done)=>{
+const fs = require('fs');
+const path = require('path');
+
+const pathToPubKey = path.join(__dirname, '../', 'id_rsa_pub.pem');
+const PUB_KEY = fs.readFileSync(pathToPubKey, 'utf8');
+
+
+const localStrat = new LocalStratergy((username,password,done)=>{
     users._findOne({
         query:{"email":username}
     })
@@ -22,7 +29,8 @@ passport.use(new LocalStratergy((username,password,done)=>{
         })
     })
     .catch(err=>done(err))
-}))
+})
+
 
 const cookieExtractor = req => {
     let token = null
@@ -32,10 +40,12 @@ const cookieExtractor = req => {
     return token
 }
 
-passport.use(new JwtStratergy({
+const options = {
     jwtFromRequest: cookieExtractor,
-    secretOrKey : process.env.JWT_SECRET
-},(payload,done)=>{
+    secretOrKey : PUB_KEY,
+    algorithms: ['RS256']
+}
+const jwtStrat = new JwtStratergy(options,(payload,done)=>{
     users._findOne({
         query:{ "_id": payload.sub }
     })
@@ -48,4 +58,9 @@ passport.use(new JwtStratergy({
     .catch(e=>{
         return done(e, false)
     });
-}));
+})
+
+module.exports = (passport) => {
+    passport.use(localStrat);
+    passport.use(jwtStrat);
+}
