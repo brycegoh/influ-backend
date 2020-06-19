@@ -5,9 +5,7 @@ const {users} = require("../models/users");
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
-
-const pathToPubKey = path.join(__dirname, '../', 'id_rsa_pub.pem');
-const PUB_KEY = fs.readFileSync(pathToPubKey, 'utf8');
+const PUB_KEY = require('../auth')
 
 
 const localStrat = new LocalStratergy((username,password,done)=>{

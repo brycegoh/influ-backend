@@ -3,7 +3,7 @@ const router = express.Router();
 const jwt = require("jsonwebtoken");
 const passport = require("passport");
 const {users} = require('../models/users');
-const {signToken,signRfToken} = require('../lib/utils')
+const {signToken} = require('../auth')
 require('dotenv').config();
 
 
