@@ -5,7 +5,6 @@ const {users} = require("../models/users");
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
-const {PUB_KEY} = require('./auth')
 
 
 const localStrat = new LocalStratergy((username,password,done)=>{
@@ -18,6 +17,7 @@ const localStrat = new LocalStratergy((username,password,done)=>{
         }
         user.comparePw(password)
         .then((isMatch)=>{
+            //check email verfied or not
             if(isMatch){
                 return done(null, user)
             }else{
@@ -40,7 +40,7 @@ const cookieExtractor = req => {
 
 const options = {
     jwtFromRequest: cookieExtractor,
-    secretOrKey : PUB_KEY,
+    secretOrKey : process.env.RSA_PUB,
     algorithms: ['RS256']
 }
 const jwtStrat = new JwtStratergy(options,(payload,done)=>{
