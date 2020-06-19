@@ -83,6 +83,8 @@ const verifyToken = (req, res, next) => {
             const newRefreshToken = signRfToken(userData._id, userData.password)
             res.cookie('access_token', newAccessToken, {httpOnly:true, sameSite:true});
             res.cookie('refresh_token', newRefreshToken, {httpOnly:true, sameSite:true});
+            res.set({"userId": userData._id })
+            res.set({"role": userData.userType })
             req.cookies["access_token"] = newAccessToken
             return next();
         }
