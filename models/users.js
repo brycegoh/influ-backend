@@ -79,15 +79,10 @@ class Users extends promiseBasedQueries{
 
     issueRefreshToken(){
         let promise = q.defer()
-        const tokenRf = signRfToken(this._id)
-        this.refreshTokens = [...this.refreshTokens, tokenRf]
-        this._save()
-        .then(()=>{
-            promise.resolve(tokenRf)
-        })
-        .catch(e=>{
-            promise.reject(e)
-        })
+        const tokenRf = signRfToken(this._id, this.password)
+
+        promise.resolve(tokenRf)
+        
         return promise.promise
     }
     
