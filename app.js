@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 const passport = require('passport');
 const cors = require("cors");
 require('dotenv').config();
-const {verifyToken } = require('./auth')
+const {verifyToken } = require('./config/auth')
 
 //config
 const port = process.env.PORT || 5000;
