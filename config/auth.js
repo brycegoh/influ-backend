@@ -4,15 +4,15 @@ const path = require('path');
 const {users} = require('../models/users');
 require('dotenv').config();
 
-const pathToPrivKey = path.join(__dirname, '../', 'id_rsa_priv.pem');
+// const pathToPrivKey = path.join(__dirname, '../', 'id_rsa_priv.pem');
 const PRIV_KEY = process.env.RSA_PRIV
 //fs.readFileSync(pathToPrivKey, 'utf8');
 
-const pathToPrivKeyRf = path.join(__dirname, '../', 'id_rsa_priv_rf.pem');
+// const pathToPrivKeyRf = path.join(__dirname, '../', 'id_rsa_priv_rf.pem');
 const PRIV_KEY_Rf = process.env.RSA_PRIV_RF
 //fs.readFileSync(pathToPrivKeyRf, 'utf8');
 
-const pathToPubKey = path.join(__dirname, '../', 'id_rsa_pub.pem');
+// const pathToPubKey = path.join(__dirname, '../', 'id_rsa_pub.pem');
 const PUB_KEY = process.env.RSA_PUB
 //fs.readFileSync(pathToPubKey, 'utf8');
 
