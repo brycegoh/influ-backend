@@ -29,7 +29,7 @@ const signRfToken = (userId, pw) => {
         // iss : process.env.JWT_ISSUER,
         sub: userId,
         // aud: "www.influ.com"
-    },`${PRIV_KEY_Rf}${pw}`, {expiresIn: 8});
+    },`${PRIV_KEY_Rf}${pw}`, {expiresIn: '1 day'});
 }
 const cookieExtractor = req => {
     let accessToken = null
@@ -76,7 +76,6 @@ const verifyToken = (req, res, next) => {
     const userId = checkTokenForChanges( accessToken )
     users._findOne({query:{"_id":userId}})
     .then(userData=>{
-        console.log(userData)
         const refreshTokenValid = checkRefreshToken( refreshToken, userData.password, userData.id )
         if(refreshTokenValid){
             console.log("refresh valid")
@@ -84,6 +83,7 @@ const verifyToken = (req, res, next) => {
             const newRefreshToken = signRfToken(userData._id, userData.password)
             res.cookie('access_token', newAccessToken, {httpOnly:true, sameSite:true});
             res.cookie('refresh_token', newRefreshToken, {httpOnly:true, sameSite:true});
+            req.cookies["access_token"] = newAccessToken
             return next();
         }
         if(!refreshTokenValid){

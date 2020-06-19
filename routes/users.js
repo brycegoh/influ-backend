@@ -104,12 +104,21 @@ router.get('/logout', passport.authenticate('jwt',{session:false}) ,(req,res)=>{
 })
 
 router.get('/get-projects', passport.authenticate('jwt',{session:false}) ,(req,res)=>{
-    res.json({user:{
+    if(req.isAuthenticated()){
+        res.json({user:{
             email:"", 
             userType:""
         },
         successFlag: true
     })
+    }else{
+        res.json({user:{
+            email:"NOPE"
+        },
+        successFlag: true
+    })
+    }
+    
 })
 
 module.exports = router

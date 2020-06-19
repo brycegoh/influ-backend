@@ -86,7 +86,7 @@ class Users extends promiseBasedQueries{
             // iss : process.env.JWT_ISSUER,
             sub: this._id,
             // aud: "www.influ.com"
-        },`${PRIV_KEY_Rf}${this.password}`, {expiresIn: 8});
+        },`${PRIV_KEY_Rf}${this.password}`, {expiresIn: '1 day'});
 
         promise.resolve(tokenRf)
         
