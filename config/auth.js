@@ -30,7 +30,7 @@ const signToken = (userId) => {
 const signRfToken = (userId, pw) => {
     return jwt.sign({
         // iss : process.env.JWT_ISSUER,
-        sub: userId,
+        // sub: userId,
         // aud: "www.influ.com"
     },`${PRIV_KEY_Rf}${pw}`, {expiresIn: 6});
 }

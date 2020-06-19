@@ -65,8 +65,8 @@ router.post('/login', passport.authenticate('local',{session:false}) ,(req,res)=
         users._findOne({query:{"_id":_id}})
         .then(user=>{
             const tokenRf = signRfToken( user._id, user.password )
-            res.cookie('access_token', token, {httpOnly:true, sameSite:true});
-            res.cookie('refresh_token', tokenRf, {httpOnly:true, sameSite:true});
+            res.cookie('access_token', token, {httpOnly:true, sameSite:true, });
+            res.cookie('refresh_token', tokenRf, {httpOnly:true, sameSite:true, });
             res.set({"userId": user._id })
             res.set({"role": user.userType })
             res.status(200).json({isAuthenticated: true, user:{email, userType}});
