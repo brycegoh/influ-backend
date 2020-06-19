@@ -3,7 +3,7 @@ const router = express.Router();
 const jwt = require("jsonwebtoken");
 const passport = require("passport");
 const {users} = require('../models/users');
-const {signToken} = require('../auth')
+const {signToken, signRfToken} = require('../auth')
 require('dotenv').config();
 
 
@@ -64,23 +64,12 @@ router.post('/login', passport.authenticate('local',{session:false}) ,(req,res)=
         const token = signToken(_id)
         users._findOne({query:{"_id":_id}})
         .then(user=>{
-            user.issueRefreshToken()
-            .then(tokenRf=>{
-                res.cookie('access_token', token, {httpOnly:true, sameSite:true});
-                res.cookie('refresh_token', tokenRf, {httpOnly:true, sameSite:true});
-                res.set({"userId": user._id })
-                res.set({"role": user.userType })
-                res.status(200).json({isAuthenticated: true, user:{email, userType}});
-            })
-            .catch(err=>{
-                console.log(err)
-                res.status(500).json({
-                    message:{
-                        msgBody:err,
-                        errorFlag: true
-                    }
-                })
-            })
+            const tokenRf = signRfToken( user._id, user.password )
+            res.cookie('access_token', token, {httpOnly:true, sameSite:true});
+            res.cookie('refresh_token', tokenRf, {httpOnly:true, sameSite:true});
+            res.set({"userId": user._id })
+            res.set({"role": user.userType })
+            res.status(200).json({isAuthenticated: true, user:{email, userType}});
         })
         .catch(err=>{
             console.log(err)

@@ -31,6 +31,7 @@ const signRfToken = (userId, pw) => {
         // aud: "www.influ.com"
     },`${PRIV_KEY_Rf}${pw}`, {expiresIn: '1 day'});
 }
+
 const cookieExtractor = req => {
     let accessToken = null
     let refreshToken = null
@@ -103,6 +104,5 @@ module.exports = {
     cookieExtractor,
     checkTokenForChanges,
     checkRefreshToken,
-    PUB_KEY,
-    PRIV_KEY_Rf
+    PUB_KEY
 }

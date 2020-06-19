@@ -2,9 +2,6 @@ const mongoose = require('mongoose');
 const promiseBasedQueries = require('./index')
 const q = require('q')
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const fs = require('fs');
-const path = require('path');
 
 const UsersSchema = mongoose.Schema({
     email:{
@@ -75,21 +72,6 @@ class Users extends promiseBasedQueries{
         // const hashVerify = crypto.pbkdf2Sync(clientPw, this.salt, 10000, 64, 'sha512').toString('hex')
         // promise.resolve(this.password === hashVerify)
 
-        return promise.promise
-    }
-
-    issueRefreshToken(){
-        const pathToPrivKeyRf = path.join(__dirname, '../', 'id_rsa_priv_rf.pem');
-        const PRIV_KEY_Rf = fs.readFileSync(pathToPrivKeyRf, 'utf8');
-        let promise = q.defer()
-        const tokenRf = jwt.sign({
-            // iss : process.env.JWT_ISSUER,
-            sub: this._id,
-            // aud: "www.influ.com"
-        },`${PRIV_KEY_Rf}${this.password}`, {expiresIn: '1 day'});
-
-        promise.resolve(tokenRf)
-        
         return promise.promise
     }
     
