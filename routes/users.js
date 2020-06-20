@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const jwt = require("jsonwebtoken");
 const passport = require("passport");
 const {users} = require('../models/users');
 const {signToken, signRfToken, createCsrfToken} = require('../config/auth')
@@ -92,7 +91,7 @@ router.get('/logout', passport.authenticate('jwt',{session:false}) ,(req,res)=>{
             email:"", 
             userType:""
         },
-        successFlag: true
+        errorFlag: false
     })
 })
 
@@ -102,13 +101,13 @@ router.get('/get-projects', passport.authenticate('jwt',{session:false}) ,(req,r
             email:"", 
             userType:""
         },
-        successFlag: true
+        errorFlag: false
     })
     }else{
         res.json({user:{
             email:"NOPE"
         },
-        successFlag: true
+        errorFlag: false
         })
     }
 })

@@ -65,6 +65,17 @@ const checkRefreshAndCfToken = (token, pw, cfToken) => {
     return decoded.cfToken === cfToken
 }
 
+const checkRefreshToken = (token, pw) => {
+    let decoded = null
+    try {
+        decoded = jwt.verify(token, `${PRIV_KEY_Rf}${pw}`);
+    } catch(err) {
+        console.log(err)
+        return false
+    }
+    return true
+}
+
 const createCsrfToken = ()=>{
     return crypto.randomBytes(48).toString('hex');
 }
@@ -111,6 +122,7 @@ const verifyToken = (req, res, next) => {
             res.set({"role": userData.userType })
             res.set({"cf-token": newCsrfToken})
             req.cookies["access_token"] = newAccessToken
+            
             return next();
         }
         if(!refreshTokenValid){
@@ -131,5 +143,6 @@ module.exports = {
     cookieExtractor,
     checkTokenForChanges,
     createCsrfToken,
+    checkRefreshToken,
     PUB_KEY
 }
