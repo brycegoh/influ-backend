@@ -2,7 +2,6 @@ const express = require("express");
 const cookieParser = require("cookie-parser");
 const mongoose = require("mongoose");
 const passport = require("passport");
-const cors = require("cors");
 require("dotenv").config();
 const { verifyToken, corsHandler } = require("./config/auth");
 
@@ -29,7 +28,6 @@ app.use(express.json());
 app.use(corsHandler);
 require("./config/passport")(passport);
 app.use(passport.initialize());
-// app.use(cors({ origin: true, credentials: true }));
 
 app.use(verifyToken);
 app.use(require("./routes"));
