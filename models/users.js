@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const promiseBasedQueries = require('./index')
 const q = require('q')
-const bcrypt = require('bcrypt')
+const bcrypt = require('bcrypt');
 
 const UsersSchema = mongoose.Schema({
     email:{
@@ -11,6 +11,10 @@ const UsersSchema = mongoose.Schema({
     },
     password:{
         type: String
+    },
+    refreshTokens:{
+        type: Array,
+        default: []
     },
     pwSecure:{
         type: Boolean,

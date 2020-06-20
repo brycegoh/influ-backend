@@ -1,94 +1,126 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const jwt = require("jsonwebtoken");
 const passport = require("passport");
-const {users} = require('../models/users');
-const {signToken} = require('../lib/utils')
-require('dotenv').config();
+const { users } = require("../models/users");
+const { signToken, signRfToken, createCsrfToken } = require("../config/auth");
+require("dotenv").config();
 
-
-router.post('/register',(req,res)=>{
-    let userData = req.body
-    let query = {
-        "email": userData.email
-    }
-    users._findOne({query})
-    .then(existingAccount=>{
-        if(existingAccount){
-            res.status(400).json({
-                message:{
-                    msgBody:"Email in use",
-                    errorFlag: true
-                }
-            })
-        }else{
-            let newUser = new users(userData)
-            newUser._save()
-            .then(userData=>{
-                res.status(201).json({
-                    message:{
-                        msgBody:"Account created successfully",
-                        errorFlag: false
-                    }
-                })
-            })
-            .catch(e=>{
-                res.status(500).json({
-                    message:{
-                        msgBody:e,
-                        errorFlag: true
-                    }
-                })
-            })
-        }
+router.post("/register", (req, res) => {
+  let userData = req.body;
+  let query = {
+    email: userData.email,
+  };
+  users
+    ._findOne({ query })
+    .then((existingAccount) => {
+      if (existingAccount) {
+        res.status(400).json({
+          message: "Email in use",
+          errorFlag: true,
+        });
+      } else {
+        let newUser = new users(userData);
+        newUser
+          ._save()
+          .then((userData) => {
+            res.status(201).json({
+              message: {
+                message: "Account created successfully",
+                errorFlag: false,
+              },
+            });
+          })
+          .catch((e) => {
+            res.status(500).json({
+              message: e,
+              errorFlag: true,
+            });
+          });
+      }
     })
-    .catch(err=>{
-        console.log(err)
-        res.status(500).json({
-            message:{
-                msgBody:err,
-                errorFlag: true
-            }
+    .catch((err) => {
+      console.log(err);
+      res.status(500).json({
+        message: err,
+        errorFlag: true,
+      });
+    });
+});
+
+router.post(
+  "/login",
+  passport.authenticate("local", { session: false }),
+  (req, res) => {
+    if (req.isAuthenticated()) {
+      const { _id, email, userType } = req.user;
+      console.log("user");
+      const csrfToken = createCsrfToken();
+      const token = signToken(_id);
+      users
+        ._findOne({ query: { _id: _id } })
+        .then((user) => {
+          const tokenRf = signRfToken(user.password, csrfToken);
+          res.cookie("access_token", token, { httpOnly: true, sameSite: true });
+          res.cookie("refresh_token", tokenRf, {
+            httpOnly: true,
+            sameSite: true,
+          });
+          res.set({ "cf-token": csrfToken });
+          res.set({ userId: user._id });
+          res.set({ role: user.userType });
+          res
+            .status(200)
+            .json({ isAuthenticated: true, user: { email, userType } });
         })
-    })
-})
-
-router.post('/login', passport.authenticate('local',{session:false}) ,(req,res)=>{
-    if(req.isAuthenticated()){
-        const {
-            _id,
-            email,
-            userType
-        } = req.user
-        const token = signToken(_id)
-        res.cookie('access_token', token, {httpOnly:true, sameSite:true});
-        res.status(200).json({isAuthenticated: true, user:{email, userType}});
+        .catch((err) => {
+          console.log(err);
+          res.status(500).json({
+            message: err,
+            errorFlag: true,
+          });
+        });
     }
-})
+  }
+);
 
-router.get('/logout', passport.authenticate('jwt',{session:false}) ,(req,res)=>{
-    res.clearCookie('access_token')
-    res.json({user:{
-            email:"", 
-            userType:""
+router.get(
+  "/logout",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    res.clearCookie("access_token");
+    res.clearCookie("refresh_token");
+    res.json({
+      message: "Logged out",
+      user: {
+        email: "",
+        userType: "",
+      },
+      errorFlag: false,
+    });
+  }
+);
+
+router.get(
+  "/get-projects",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    if (req.isAuthenticated()) {
+      res.json({
+        user: {
+          email: "",
+          userType: "",
         },
-        successFlag: true
-    })
-})
-
-router.get('/get-projects', passport.authenticate('jwt',{session:false}) ,(req,res)=>{
-    if(req.isAuthenticated()){
-        console.log( req.isAuthenticated() )
-        res.json({user:{
-                email:"", 
-                userType:""
-            },
-            successFlag: true
-        })
-    }else{
-        res.status('500')
+        errorFlag: false,
+      });
+    } else {
+      res.json({
+        user: {
+          email: "NOPE",
+        },
+        errorFlag: false,
+      });
     }
-    
-})
+  }
+);
 
-module.exports = router
+module.exports = router;
