@@ -2,6 +2,7 @@ const jwt = require("jsonwebtoken");
 const fs = require('fs');
 const path = require('path');
 const {users} = require('../models/users');
+const crypto = require('crypto')
 require('dotenv').config();
 
 // const pathToPrivKey = path.join(__dirname, '../', 'id_rsa_priv.pem');
@@ -24,15 +25,13 @@ const signToken = (userId) => {
         // iss : process.env.JWT_ISSUER,
         sub: userId,
         // aud: "www.influ.com"
-    },PRIV_KEY, {expiresIn: 5, algorithm: 'RS256'});
+    },PRIV_KEY, {expiresIn: 60*15, algorithm: 'RS256'});
 }
 
-const signRfToken = (userId, pw) => {
+const signRfToken = (pw, csrfToken) => {
     return jwt.sign({
-        // iss : process.env.JWT_ISSUER,
-        // sub: userId,
-        // aud: "www.influ.com"
-    },`${PRIV_KEY_Rf}${pw}`, {expiresIn: 6});
+        cfToken: csrfToken
+    },`${PRIV_KEY_Rf}${pw}`, {expiresIn: 60*60});
 }
 
 const cookieExtractor = req => {
@@ -42,7 +41,8 @@ const cookieExtractor = req => {
         accessToken = req.cookies["access_token"]
         refreshToken = req.cookies["refresh_token"]
     }
-    return { accessToken,refreshToken }
+    let cfToken = req.headers["cf-token"]
+    return { accessToken,refreshToken, cfToken }
 }
 
 const checkTokenForChanges = (token) => {
@@ -54,8 +54,7 @@ const checkTokenForChanges = (token) => {
     return decoded.sub
 }
 
-const checkRefreshToken = (token, pw, id) => {
-    console.log(id)
+const checkRefreshAndCfToken = (token, pw, cfToken) => {
     let decoded = null
     try {
         decoded = jwt.verify(token, `${PRIV_KEY_Rf}${pw}`);
@@ -63,38 +62,63 @@ const checkRefreshToken = (token, pw, id) => {
         console.log(err)
         return false
     }
-    return decoded.sub === id
+    return decoded.cfToken === cfToken
+}
+
+const createCsrfToken = ()=>{
+    return crypto.randomBytes(48).toString('hex');
 }
 
 const verifyToken = (req, res, next) => {
     let {
         accessToken,
-        refreshToken
+        refreshToken,
+        cfToken
     } = cookieExtractor(req)
     
-    if(!accessToken || !refreshToken){
+    if(!accessToken && !refreshToken){
+        //fresh login
         console.log("no tokens")
         return next();
+    }
+    if(accessToken && refreshToken && !cfToken){
+        if(req.originalUrl === "/api/auth/refresh-tokens"){
+            //create refresh cftoken endpoint
+            console.log("test")
+            return next();
+            //on send to api
+            //api needs to verify expiration of refresh token
+            //not expired then resend a full set of tokens
+        }
+        return res.status(401).json({
+            errorFlag: true,
+            message: "Not authorized"
+        })
     }
     // check access token for changes and extract
     const userId = checkTokenForChanges( accessToken )
     users._findOne({query:{"_id":userId}})
     .then(userData=>{
-        const refreshTokenValid = checkRefreshToken( refreshToken, userData.password, userData.id )
+        const refreshTokenValid = checkRefreshAndCfToken( refreshToken, userData.password, cfToken )
         if(refreshTokenValid){
             console.log("refresh valid")
+            const newCsrfToken = createCsrfToken()
             const newAccessToken = signToken(userData._id)
-            const newRefreshToken = signRfToken(userData._id, userData.password)
+            const newRefreshToken = signRfToken(userData.password, newCsrfToken)
             res.cookie('access_token', newAccessToken, {httpOnly:true, sameSite:true});
             res.cookie('refresh_token', newRefreshToken, {httpOnly:true, sameSite:true});
             res.set({"userId": userData._id })
             res.set({"role": userData.userType })
+            res.set({"cf-token": newCsrfToken})
             req.cookies["access_token"] = newAccessToken
             return next();
         }
         if(!refreshTokenValid){
             console.log("refresh token not valid")
-            return next();
+            return res.status(401).json({
+                errorFlag: true,
+                message: "Not authorized"
+            })
         }
     })
     .catch(err=>console.log(err))
@@ -106,6 +130,6 @@ module.exports = {
     verifyToken,
     cookieExtractor,
     checkTokenForChanges,
-    checkRefreshToken,
+    createCsrfToken,
     PUB_KEY
 }
