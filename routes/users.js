@@ -15,10 +15,8 @@ router.post('/register',(req,res)=>{
     .then(existingAccount=>{
         if(existingAccount){
             res.status(400).json({
-                message:{
-                    msgBody:"Email in use",
-                    errorFlag: true
-                }
+                message:"Email in use",
+                errorFlag: true
             })
         }else{
             let newUser = new users(userData)
@@ -26,17 +24,15 @@ router.post('/register',(req,res)=>{
             .then(userData=>{
                 res.status(201).json({
                     message:{
-                        msgBody:"Account created successfully",
+                        message:"Account created successfully",
                         errorFlag: false
                     }
                 })
             })
             .catch(e=>{
                 res.status(500).json({
-                    message:{
-                        msgBody:e,
-                        errorFlag: true
-                    }
+                    message:e,
+                    errorFlag: true
                 })
             })
         }
@@ -44,10 +40,8 @@ router.post('/register',(req,res)=>{
     .catch(err=>{
         console.log(err)
         res.status(500).json({
-            message:{
-                msgBody:err,
-                errorFlag: true
-            }
+            message:err,
+            errorFlag: true
         })
     })
 })
@@ -75,10 +69,8 @@ router.post('/login', passport.authenticate('local',{session:false}) ,(req,res)=
         .catch(err=>{
             console.log(err)
             res.status(500).json({
-                message:{
-                    msgBody:err,
-                    errorFlag: true
-                }
+                message:err,
+                errorFlag: true
             })
         })
     }
@@ -87,9 +79,11 @@ router.post('/login', passport.authenticate('local',{session:false}) ,(req,res)=
 router.get('/logout', passport.authenticate('jwt',{session:false}) ,(req,res)=>{
     res.clearCookie('access_token')
     res.clearCookie('refresh_token')
-    res.json({user:{
+    res.json({
+        message: "Logged out",
+        user:{
             email:"", 
-            userType:""
+            userType:"",
         },
         errorFlag: false
     })
@@ -97,17 +91,19 @@ router.get('/logout', passport.authenticate('jwt',{session:false}) ,(req,res)=>{
 
 router.get('/get-projects', passport.authenticate('jwt',{session:false}) ,(req,res)=>{
     if(req.isAuthenticated()){
-        res.json({user:{
-            email:"", 
-            userType:""
-        },
-        errorFlag: false
-    })
+        res.json({
+            user:{
+                email:"", 
+                userType:""
+            },
+            errorFlag: false
+        })
     }else{
-        res.json({user:{
-            email:"NOPE"
-        },
-        errorFlag: false
+        res.json({
+            user:{
+                email:"NOPE"
+            },
+            errorFlag: false
         })
     }
 })
