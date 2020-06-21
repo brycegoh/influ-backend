@@ -26,6 +26,7 @@ const corsHandler = (req, res, next) => {
   console.log(origin);
   if (allowedOrigins.includes(origin)) {
     console.log("test");
+    res.header("Access-Control-Expose-Headers", "cf-token");
     res.header("Access-Control-Allow-Origin", origin);
     res.header(
       "Access-Control-Allow-Headers",

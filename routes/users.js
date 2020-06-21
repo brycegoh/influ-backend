@@ -66,11 +66,12 @@ router.post(
             sameSite: true,
           });
           res.set({ "cf-token": csrfToken });
-          res.set({ userId: user._id });
-          res.set({ role: user.userType });
           res
             .status(200)
-            .json({ isAuthenticated: true, user: { email, userType } });
+            .json({
+              isAuthenticated: true,
+              user: { userId: _id, email, userType },
+            });
         })
         .catch((err) => {
           console.log(err);
