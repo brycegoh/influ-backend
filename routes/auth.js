@@ -43,14 +43,17 @@ router.get("/refresh-tokens", (req, res) => {
             httpOnly: true,
             sameSite: true,
           });
-          res.set({ userId: userData._id });
-          res.set({ role: userData.userType });
+          // res.set({ userId: userData._id });
+          // res.set({ role: userData.userType });
           res.set({ "cf-token": newCsrfToken });
           req.cookies["access_token"] = newAccessToken;
 
           res.json({
             errorFlag: false,
             message: "Token Refreshed",
+            userId: userData._id,
+            role: userData.userType,
+            email: userData.email,
           });
         }
         if (!refreshTokenValid) {
