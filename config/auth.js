@@ -114,7 +114,6 @@ const createCsrfToken = () => {
 };
 
 const verifyToken = (req, res, next) => {
-  console.log("test");
   let { accessToken, refreshToken, cfToken } = cookieExtractor(req);
 
   if (!accessToken && !refreshToken) {
@@ -126,7 +125,6 @@ const verifyToken = (req, res, next) => {
   if (accessToken && refreshToken && !cfToken) {
     if (req.originalUrl === "/api/auth/refresh-tokens") {
       //create refresh cftoken endpoint
-      console.log("test");
       return next();
       //on send to api
       //api needs to verify expiration of refresh token
