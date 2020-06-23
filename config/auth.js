@@ -30,7 +30,7 @@ const corsHandler = (req, res, next) => {
     res.header("Access-Control-Allow-Origin", origin);
     res.header(
       "Access-Control-Allow-Headers",
-      "Origin, X-Requested-With, Content-Type, Accept"
+      "Origin, X-Requested-With, Content-Type, Accept, cf-token"
     );
     res.header("Access-Control-Allow-Credentials", true);
     if (req.method === "OPTIONS") {
