@@ -1,4 +1,6 @@
 const express = require("express");
+const helmet = require("helmet");
+const csurf = require("csurf");
 const cookieParser = require("cookie-parser");
 const mongoose = require("mongoose");
 const passport = require("passport");
@@ -26,6 +28,7 @@ const app = express();
 app.use(cookieParser());
 app.use(express.json());
 app.use(corsHandler);
+app.use(helmet());
 //-------- session store ---------
 const session = require("express-session");
 const MongoStore = require("connect-mongo")(session);
@@ -38,16 +41,22 @@ app.use(
     }),
     resave: false,
     saveUninitialized: false,
-    name: "trkses",
+    name: "ssid",
     cookie: {
-      maxAge: 1000 * 60 * 10, //10mins
+      // maxAge: 1000 * 10, //10mins
       secure: process.env.NODE_ENV === "production",
       httpOnly: true,
       sameSite: "strict",
     },
   })
 );
+//------- csrf --------
+app.use(csurf({ cookie: false }));
 
+// app.use((req, res, next) => {
+//   res.cookie("csrf-token", req.csrfToken());
+//   next();
+// });
 //---------- passport ----------
 require("./config/passport")(passport);
 app.use(passport.initialize());

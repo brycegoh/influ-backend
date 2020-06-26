@@ -50,7 +50,7 @@ router.post("/login", passport.authenticate("local"), (req, res) => {
   if (req.isAuthenticated()) {
     console.log("authenticated");
     const { _id, email, userType } = req.user;
-
+    console.log("test");
     users
       ._findOne({ query: { _id: _id } })
       .then((user) => {
@@ -71,7 +71,7 @@ router.post("/login", passport.authenticate("local"), (req, res) => {
 
 router.get("/logout", (req, res) => {
   const cookieSettings = {
-    maxAge: 1000 * 60 * 10, //10mins
+    maxAge: 1000 * 10, //10mins
     secure: process.env.NODE_ENV === "production",
     httpOnly: true,
     sameSite: "strict",
@@ -79,7 +79,7 @@ router.get("/logout", (req, res) => {
 
   req.logOut();
   req.session.destroy();
-  res.clearCookie("trkses", { path: "/" }).json({
+  res.clearCookie("ssid").json({
     message: "Logged out",
     errorFlag: false,
   });
@@ -87,9 +87,9 @@ router.get("/logout", (req, res) => {
 
 router.get("/get-session", (req, res) => {
   if (req.session && req.session.passport && req.user) {
-    res.json(req.user);
+    res.json({ user: req.user, _csrf: req.csrfToken() });
   } else {
-    res.json({});
+    res.json({ _csrf: req.csrfToken() });
   }
 });
 
