@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 const passport = require("passport");
 const { users } = require("../models/users");
+const bcrypt = require("bcrypt");
+const { randomBytes } = require("crypto");
 require("dotenv").config();
 
 router.post("/register", (req, res) => {
@@ -22,11 +24,11 @@ router.post("/register", (req, res) => {
         newUser
           ._save()
           .then((userData) => {
+            userData.emailVerification();
             res.status(201).json({
-              message: {
-                message: "Account created successfully",
-                errorFlag: false,
-              },
+              message: "Account created successfully",
+              errorFlag: false,
+              _csrf: req.csrfToken(),
             });
           })
           .catch((e) => {
@@ -49,6 +51,7 @@ router.post("/register", (req, res) => {
 router.post("/login", passport.authenticate("local"), (req, res) => {
   if (req.isAuthenticated()) {
     console.log("authenticated");
+
     const { _id, email, userType } = req.user;
     console.log("test");
     users
@@ -57,6 +60,7 @@ router.post("/login", passport.authenticate("local"), (req, res) => {
         res.status(200).json({
           isAuthenticated: true,
           user: { userId: _id, email, userType },
+          _csrf: req.csrfToken(),
         });
       })
       .catch((err) => {
@@ -69,19 +73,13 @@ router.post("/login", passport.authenticate("local"), (req, res) => {
   }
 });
 
-router.get("/logout", (req, res) => {
-  const cookieSettings = {
-    maxAge: 1000 * 10, //10mins
-    secure: process.env.NODE_ENV === "production",
-    httpOnly: true,
-    sameSite: "strict",
-  };
-
+router.post("/logout", (req, res) => {
   req.logOut();
   req.session.destroy();
   res.clearCookie("ssid").json({
     message: "Logged out",
     errorFlag: false,
+    _csrf: req.csrfToken(),
   });
 });
 
@@ -89,7 +87,9 @@ router.get("/get-session", (req, res) => {
   if (req.session && req.session.passport && req.user) {
     res.json({ user: req.user, _csrf: req.csrfToken() });
   } else {
-    res.json({ _csrf: req.csrfToken() });
+    res.json({
+      _csrf: req.csrfToken(),
+    });
   }
 });
 

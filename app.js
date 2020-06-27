@@ -9,7 +9,10 @@ const { corsHandler } = require("./config/auth");
 const { users } = require("./models/users");
 
 //config
-const port = process.env.PORT || 5000;
+const port =
+  process.env.NODE_ENV === "production"
+    ? process.env.PORT
+    : process.env.DEV_PORT;
 const MONGODB_URL = process.env.MONGODB_URL;
 
 //mongodb
@@ -27,13 +30,13 @@ dbConnection.once("open", () => {
 const app = express();
 app.use(cookieParser());
 app.use(express.json());
-app.use(corsHandler);
+// app.use(corsHandler);
 app.use(helmet());
 //-------- session store ---------
-const session = require("express-session");
-const MongoStore = require("connect-mongo")(session);
+const expressSession = require("express-session");
+const MongoStore = require("connect-mongo")(expressSession);
 app.use(
-  session({
+  expressSession({
     secret: process.env.SESS_SECRET,
     store: new MongoStore({
       mongooseConnection: mongoose.connection,
@@ -50,23 +53,21 @@ app.use(
     },
   })
 );
-//------- csrf --------
-app.use(csurf({ cookie: false }));
-
-// app.use((req, res, next) => {
-//   res.cookie("csrf-token", req.csrfToken());
-//   next();
-// });
 //---------- passport ----------
 require("./config/passport")(passport);
 app.use(passport.initialize());
 app.use(passport.session());
 
-// app.use((req, res, next) => {
-//   console.log(req.session);
-//   console.log(req.user);
-//   next();
-// });
+//------- csrf --------
+// app.use(
+//   csurf({
+//     cookie: true,
+//     signed: true,
+//     httpOnly: true,
+//     secure: process.env.NODE_ENV === "production",
+//     sameSite: "strict",
+//   })
+// );
 //----------- routes ------
 app.use(require("./routes"));
 

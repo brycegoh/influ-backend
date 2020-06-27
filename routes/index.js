@@ -4,9 +4,9 @@ const router = express.Router();
 const users = require("./users");
 const auth = require("./auth");
 
-router.use("/api/users", isAdmin, users);
-
 router.use("/api/auth", auth);
+
+router.use("/api/users", isAdmin, users);
 
 function isAuthenticated(req, res, next) {
   if (req.isAuthenticated()) {
