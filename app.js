@@ -6,16 +6,15 @@ const mongoose = require("mongoose");
 const passport = require("passport");
 require("dotenv").config();
 const { corsHandler } = require("./config/auth");
-const { users } = require("./models/users");
 
-//config
+//------------config-----------------
 const port =
   process.env.NODE_ENV === "production"
     ? process.env.PORT
     : process.env.DEV_PORT;
 const MONGODB_URL = process.env.MONGODB_URL;
 
-//mongodb
+//--------------mongodb---------------
 mongoose.connect(MONGODB_URL, {
   useNewUrlParser: true,
   useCreateIndex: true,
@@ -26,11 +25,11 @@ dbConnection.once("open", () => {
   console.log("Connected to db");
 });
 
-//------middleware-------
+//------middleware etc-------
 const app = express();
 app.use(cookieParser());
 app.use(express.json());
-// app.use(corsHandler);
+app.use(corsHandler);
 app.use(helmet());
 //-------- session store ---------
 const expressSession = require("express-session");
@@ -59,24 +58,24 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 //------- csrf --------
-// app.use(
-//   csurf({
-//     cookie: true,
-//     signed: true,
-//     httpOnly: true,
-//     secure: process.env.NODE_ENV === "production",
-//     sameSite: "strict",
-//   })
-// );
+app.use(
+  csurf({
+    cookie: true,
+    signed: true,
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+  })
+);
 //----------- routes ------
 app.use(require("./routes"));
 
-//port
+//--------port log------------
 app.listen(port, () => {
   console.log("SERVER RUNNING LO");
 });
 
-// error handling middleware
+//--------error handling middleware--------
 function errorHandler(err, req, res, next) {
   console.log(err);
 }

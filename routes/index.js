@@ -6,7 +6,7 @@ const auth = require("./auth");
 
 router.use("/api/auth", auth);
 
-router.use("/api/users", isAdmin, users);
+router.use("/api/users", users);
 
 function isAuthenticated(req, res, next) {
   if (req.isAuthenticated()) {

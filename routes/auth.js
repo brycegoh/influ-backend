@@ -2,12 +2,13 @@ const express = require("express");
 const router = express.Router();
 const passport = require("passport");
 const { users } = require("../models/users");
-const bcrypt = require("bcrypt");
+const moment = require("moment");
 const { randomBytes } = require("crypto");
 require("dotenv").config();
 
 router.post("/register", (req, res) => {
   let userData = req.body;
+  console.log(userData);
   let query = {
     email: userData.email,
   };
@@ -24,7 +25,7 @@ router.post("/register", (req, res) => {
         newUser
           ._save()
           .then((userData) => {
-            userData.emailVerification();
+            userData.emailVerificationEmail();
             res.status(201).json({
               message: "Account created successfully",
               errorFlag: false,
@@ -32,6 +33,7 @@ router.post("/register", (req, res) => {
             });
           })
           .catch((e) => {
+            console.log(e);
             res.status(500).json({
               message: e,
               errorFlag: true,
@@ -50,10 +52,7 @@ router.post("/register", (req, res) => {
 
 router.post("/login", passport.authenticate("local"), (req, res) => {
   if (req.isAuthenticated()) {
-    console.log("authenticated");
-
     const { _id, email, userType } = req.user;
-    console.log("test");
     users
       ._findOne({ query: { _id: _id } })
       .then((user) => {
@@ -91,6 +90,61 @@ router.get("/get-session", (req, res) => {
       _csrf: req.csrfToken(),
     });
   }
+});
+
+router.post("/resend-email-verification", (req, res) => {
+  const { upn, dat } = req.body;
+  users
+    ._findOne({ query: { verifyEmailToken: upn } })
+    .then((user) => {
+      console.log(dat);
+      if (user && dat === user.verifyEmailExpiry) {
+        console.log(user);
+        user.emailVerificationEmail();
+        res.json({
+          errorFlag: false,
+          message: "Email has been sent. Please check your inbox.",
+          _csrf: req.csrfToken(),
+        });
+      } else {
+        res.json({
+          errorFlag: true,
+          message: "Please try again",
+        });
+      }
+    })
+    .catch((e) => console.log(e));
+});
+
+router.post("/verify-email", (req, res) => {
+  const { upn, dat } = req.body;
+  users._findOne({ query: { verifyEmailToken: upn } }).then((user) => {
+    if (user) {
+      user
+        .verifyEmail(upn, dat)
+        .then(() => {
+          console.log("done");
+          res.json({
+            errorFlag: false,
+            message: "Email has been verified",
+            _csrf: req.csrfToken(),
+          });
+        })
+        .catch((e) => {
+          console.log(e);
+          res.json({
+            errorFlag: true,
+            message: e.message,
+            _csrf: req.csrfToken(),
+          });
+        });
+    } else {
+      res.json({
+        errorFlag: true,
+        message: "Please try again",
+      });
+    }
+  });
 });
 
 module.exports = router;

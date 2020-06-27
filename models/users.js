@@ -32,7 +32,7 @@ const UsersSchema = mongoose.Schema(
       type: String,
     },
     verifyEmailExpiry: {
-      type: Date,
+      type: String,
     },
   },
   {
@@ -74,16 +74,18 @@ class Users extends promiseBasedQueries {
 
     return promise.promise;
   }
-  emailVerification() {
-    let promise = q.defer();
-    const verificationToken = randomBytes(48);
-    this.verificationToken = verificationToken;
-    this.verifyEmailExpiry = moment().add(20, "minutes");
+  emailVerificationEmail() {
+    const verificationToken = randomBytes(48).toString("hex");
+    const expiryDate = moment().add(10, "minutes").unix();
+    this.verifyEmailToken = verificationToken;
+    this.verifyEmailExpiry = expiryDate;
+
     const domain =
       process.env.NODE_ENV === "production"
         ? `${process.env.DOMAIN}:${process.env.PORT}`
-        : `${process.env.DEV_DOMAIN}:${process.env.DEV_PORT}`;
-    const urlLink = `${domain}/?${verificationToken}`;
+        : `${process.env.DEV_CLIENT_URL}`;
+
+    const urlLink = `${domain}/verify-email?upn=${verificationToken}&dat=${expiryDate}`;
     this._save().then(() => {
       const msg = {
         to: "purplecosmics96@gmail.com",
@@ -95,15 +97,27 @@ class Users extends promiseBasedQueries {
       sgMail.send(msg).catch((error) => {
         //Log friendly error
         console.error(error.toString());
-        console.log(output);
-
-        //Extract error msg
-        const { message, code, response } = error;
-
-        //Extract response msg
-        const { headers, body } = response;
       });
     });
+  }
+  verifyEmail(upn, dat) {
+    let promise = q.defer();
+    if (upn === this.verifyEmailToken && dat === this.verifyEmailExpiry) {
+      if (!this.verifiedEmail) {
+        this.verifiedEmail = true;
+        this.verifyEmailToken = "";
+        this.verifyEmailExpiry = "";
+        this._save();
+        promise.resolve({ status: true, message: "Succesfully Verfied Email" });
+        return promise.promise;
+      } else {
+        promise.reject({ status: false, message: "Email is verified" });
+        return promise.promise;
+      }
+    } else {
+      promise.reject({ status: false, message: "Try again" });
+      return promise.promise;
+    }
   }
 }
 

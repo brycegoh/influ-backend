@@ -10,16 +10,20 @@ const localStrat = new LocalStratergy((username, password, done) => {
     })
     .then((user) => {
       if (!user) {
-        return done(null, false);
+        return done(null, false, { message: "Wrong username or password" });
       }
-      user.comparePw(password).then((isMatch) => {
-        //check email verfied or not
-        if (isMatch) {
-          return done(null, user);
-        } else {
-          return done(null, false);
-        }
-      });
+      if (user.verifiedEmail) {
+        user.comparePw(password).then((isMatch) => {
+          //check email verfied or not
+          if (isMatch) {
+            return done(null, user);
+          } else {
+            return done(null, false, { message: "Wrong username or password" });
+          }
+        });
+      } else {
+        return done(null, false, { message: "Email not verified" });
+      }
     })
     .catch((err) => done(err));
 });

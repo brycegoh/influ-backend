@@ -1,5 +1,10 @@
 const corsHandler = (req, res, next) => {
-  const allowedOrigins = ["http://localhost:3000", "http://localhost:3000/"];
+  const allowedOrigins = [
+    "http://localhost:3000",
+    "http://localhost:3000/",
+    "http://localhost:5000",
+    "http://localhost:5000/",
+  ];
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) {
     res.header("Access-Control-Allow-Origin", origin);
