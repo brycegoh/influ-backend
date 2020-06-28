@@ -3,53 +3,73 @@ const router = express.Router();
 const passport = require("passport");
 const { users } = require("../models/users");
 const { sessions } = require("../models/sessions");
+const { body, validationResult } = require("express-validator");
 const moment = require("moment");
 const { randomBytes } = require("crypto");
 require("dotenv").config();
 
-router.post("/register", (req, res) => {
-  let userData = req.body;
-  console.log(userData);
-  let query = {
-    email: userData.email,
-  };
-  users
-    ._findOne({ query })
-    .then((existingAccount) => {
-      if (existingAccount) {
-        res.status(400).json({
-          message: "Email in use",
+router.post(
+  "/register",
+  [
+    body("username").isEmail().withMessage("Invalid Email").normalizeEmail(),
+    body("password")
+      .isLength({ min: 8 })
+      .withMessage("must be at least 8 chars long")
+      .trim(),
+  ],
+  (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const errorArray = errors.array().map((x) => {
+        return { message: x.msg, param: x.param };
+      });
+      console.log(errorArray);
+      return res.status(422).json({ errorFlag: true, message: errorArray });
+    }
+
+    let userData = req.body;
+    console.log(userData);
+    let query = {
+      email: userData.email,
+    };
+    users
+      ._findOne({ query })
+      .then((existingAccount) => {
+        if (existingAccount) {
+          res.status(400).json({
+            message: "Email in use",
+            errorFlag: true,
+          });
+        } else {
+          let newUser = new users(userData);
+          newUser
+            ._save()
+            .then((userData) => {
+              userData.emailVerificationEmail();
+              res.status(201).json({
+                message: "Account created successfully",
+                errorFlag: false,
+                // _csrf: req.csrfToken(),
+              });
+            })
+            .catch((e) => {
+              console.log(e);
+              res.status(500).json({
+                message: e,
+                errorFlag: true,
+              });
+            });
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        res.status(500).json({
+          message: err,
           errorFlag: true,
         });
-      } else {
-        let newUser = new users(userData);
-        newUser
-          ._save()
-          .then((userData) => {
-            userData.emailVerificationEmail();
-            res.status(201).json({
-              message: "Account created successfully",
-              errorFlag: false,
-              // _csrf: req.csrfToken(),
-            });
-          })
-          .catch((e) => {
-            console.log(e);
-            res.status(500).json({
-              message: e,
-              errorFlag: true,
-            });
-          });
-      }
-    })
-    .catch((err) => {
-      console.log(err);
-      res.status(500).json({
-        message: err,
-        errorFlag: true,
       });
-    });
-});
+  }
+);
 
 router.post("/login", passport.authenticate("local"), (req, res) => {
   if (req.isAuthenticated()) {
