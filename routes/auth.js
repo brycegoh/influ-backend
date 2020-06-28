@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const passport = require("passport");
 const { users } = require("../models/users");
+const { sessions } = require("../models/sessions");
 const moment = require("moment");
 const { randomBytes } = require("crypto");
 require("dotenv").config();
@@ -29,7 +30,7 @@ router.post("/register", (req, res) => {
             res.status(201).json({
               message: "Account created successfully",
               errorFlag: false,
-              _csrf: req.csrfToken(),
+              // _csrf: req.csrfToken(),
             });
           })
           .catch((e) => {
@@ -59,7 +60,7 @@ router.post("/login", passport.authenticate("local"), (req, res) => {
         res.status(200).json({
           isAuthenticated: true,
           user: { userId: _id, email, userType },
-          _csrf: req.csrfToken(),
+          // _csrf: req.csrfToken(),
         });
       })
       .catch((err) => {
@@ -78,7 +79,7 @@ router.post("/logout", (req, res) => {
   res.clearCookie("ssid").json({
     message: "Logged out",
     errorFlag: false,
-    _csrf: req.csrfToken(),
+    // _csrf: req.csrfToken(),
   });
 });
 
@@ -86,7 +87,7 @@ router.get("/get-session", (req, res) => {
   if (req.session && req.session.passport && req.user) {
     res.json({ user: req.user, _csrf: req.csrfToken() });
   } else {
-    res.json({
+    res.clearCookie("ssid").json({
       _csrf: req.csrfToken(),
     });
   }
@@ -97,14 +98,13 @@ router.post("/resend-email-verification", (req, res) => {
   users
     ._findOne({ query: { verifyEmailToken: upn } })
     .then((user) => {
-      console.log(dat);
       if (user && dat === user.verifyEmailExpiry) {
         console.log(user);
         user.emailVerificationEmail();
         res.json({
           errorFlag: false,
           message: "Email has been sent. Please check your inbox.",
-          _csrf: req.csrfToken(),
+          // _csrf: req.csrfToken(),
         });
       } else {
         res.json({
@@ -118,16 +118,17 @@ router.post("/resend-email-verification", (req, res) => {
 
 router.post("/verify-email", (req, res) => {
   const { upn, dat } = req.body;
+  const date = Number(dat);
   users._findOne({ query: { verifyEmailToken: upn } }).then((user) => {
-    if (user) {
+    console.log(user);
+    if (user && user.verifyEmailExpiry > moment().unix()) {
       user
-        .verifyEmail(upn, dat)
+        .verifyEmail(upn, date)
         .then(() => {
-          console.log("done");
           res.json({
             errorFlag: false,
             message: "Email has been verified",
-            _csrf: req.csrfToken(),
+            // _csrf: req.csrfToken(),
           });
         })
         .catch((e) => {
@@ -135,7 +136,7 @@ router.post("/verify-email", (req, res) => {
           res.json({
             errorFlag: true,
             message: e.message,
-            _csrf: req.csrfToken(),
+            // _csrf: req.csrfToken(),
           });
         });
     } else {
@@ -145,6 +146,65 @@ router.post("/verify-email", (req, res) => {
       });
     }
   });
+});
+
+router.post("/forget-password-reset", (req, res) => {
+  const { email } = req.body;
+  users._findOne({ query: { email: email } }).then((user) => {
+    if (!user) {
+      res.json({
+        errorFlag: true,
+        message: "Email not found",
+      });
+    }
+    user.sendResetPasswordEmail();
+    res.json({
+      errorFlag: false,
+      message: "Email has been sent. Please check your inbox",
+    });
+  });
+});
+
+router.post("/password-reset", (req, res) => {
+  const { upn, dat, newPassword } = req.body;
+  const date = Number(dat);
+  console.log({ upn, date });
+  users
+    ._findOne({
+      query: {
+        $and: [{ resetPasswordToken: upn }, { resetPasswordExpiry: date }],
+      },
+    })
+    .then((userData) => {
+      if (userData && userData.resetPasswordExpiry > moment().unix()) {
+        userData.password = newPassword;
+        userData.resetPasswordToken = null;
+        userData.resetPasswordExpiry = null;
+        userData
+          ._save()
+          .then((updatedUser) => {
+            console.log(updatedUser);
+            return sessions
+              ._deleteMany({
+                query: { "session.passport.user": updatedUser._id },
+              })
+              .then(() => {
+                updatedUser.sendResetPasswordNotificationEmail();
+                res.json({
+                  errorFlag: false,
+                  message: "Password has been reset",
+                });
+              });
+          })
+          .catch((e) => console.log(e));
+      } else {
+        res.json({
+          errorFlag: true,
+          message: "Invalid URL",
+        });
+      }
+    })
+    .catch((e) => console.log(e));
 });
 
 module.exports = router;

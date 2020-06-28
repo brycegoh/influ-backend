@@ -34,12 +34,15 @@ app.use(helmet());
 //-------- session store ---------
 const expressSession = require("express-session");
 const MongoStore = require("connect-mongo")(expressSession);
+// const MongoStore = require("connect-mongodb-session")(expressSession);
 app.use(
   expressSession({
     secret: process.env.SESS_SECRET,
     store: new MongoStore({
+      // uri: process.env.MONGODB_URL,
       mongooseConnection: mongoose.connection,
       collection: "sessions",
+      stringify: false,
     }),
     resave: false,
     saveUninitialized: false,

@@ -32,7 +32,13 @@ const UsersSchema = mongoose.Schema(
       type: String,
     },
     verifyEmailExpiry: {
+      type: Number,
+    },
+    resetPasswordToken: {
       type: String,
+    },
+    resetPasswordExpiry: {
+      type: Number,
     },
   },
   {
@@ -105,8 +111,8 @@ class Users extends promiseBasedQueries {
     if (upn === this.verifyEmailToken && dat === this.verifyEmailExpiry) {
       if (!this.verifiedEmail) {
         this.verifiedEmail = true;
-        this.verifyEmailToken = "";
-        this.verifyEmailExpiry = "";
+        this.verifyEmailToken = null;
+        this.verifyEmailExpiry = null;
         this._save();
         promise.resolve({ status: true, message: "Succesfully Verfied Email" });
         return promise.promise;
@@ -118,6 +124,57 @@ class Users extends promiseBasedQueries {
       promise.reject({ status: false, message: "Try again" });
       return promise.promise;
     }
+  }
+
+  sendResetPasswordEmail() {
+    const verificationToken = randomBytes(48).toString("hex");
+    const expiryDate = moment().add(10, "minutes").unix();
+    this.resetPasswordToken = verificationToken;
+    this.resetPasswordExpiry = expiryDate;
+
+    const domain =
+      process.env.NODE_ENV === "production"
+        ? `${process.env.DOMAIN}:${process.env.PORT}`
+        : `${process.env.DEV_CLIENT_URL}`;
+
+    const urlLink = `${domain}/reset-password?upn=${verificationToken}&dat=${expiryDate}`;
+    this._save().then(() => {
+      const msg = {
+        to: "purplecosmics96@gmail.com",
+        from: "purplecosmics96@gmail.com",
+        subject: "Sending with Twilio SendGrid is Fun",
+        text: "and easy to do anywhere, even with Node.js",
+        html: `<strong>${urlLink}</strong>`,
+      };
+      sgMail.send(msg).catch((error) => {
+        //Log friendly error
+        console.error(error.toString());
+      });
+    });
+  }
+  sendResetPasswordNotificationEmail() {
+    // const verificationToken = randomBytes(48).toString("hex");
+    // const expiryDate = moment().add(10, "minutes").unix();
+    // this.resetPasswordToken = verificationToken;
+    // this.resetPasswordExpiry = expiryDate;
+
+    const domain =
+      process.env.NODE_ENV === "production"
+        ? `${process.env.DOMAIN}:${process.env.PORT}`
+        : `${process.env.DEV_CLIENT_URL}`;
+
+    const urlLink = `${domain}/forget-password`;
+    const msg = {
+      to: "purplecosmics96@gmail.com",
+      from: "purplecosmics96@gmail.com",
+      subject: "Your password recently got resetted",
+      text: "and easy to do anywhere, even with Node.js",
+      html: `<strong>${urlLink}</strong>`,
+    };
+    sgMail.send(msg).catch((error) => {
+      //Log friendly error
+      console.error(error.toString());
+    });
   }
 }
 

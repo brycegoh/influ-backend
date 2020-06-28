@@ -25,9 +25,6 @@ const SessionSchema = mongoose.Schema({
         type: String,
       },
     },
-    csrfSecret: {
-      type: String,
-    },
     passport: { user: { type: String } },
   },
   expires: {
