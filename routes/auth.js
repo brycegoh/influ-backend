@@ -74,22 +74,11 @@ router.post(
 router.post("/login", passport.authenticate("local"), (req, res) => {
   if (req.isAuthenticated()) {
     const { _id, email, userType } = req.user;
-    users
-      ._findOne({ query: { _id: _id } })
-      .then((user) => {
-        res.status(200).json({
-          isAuthenticated: true,
-          user: { userId: _id, email, userType },
-          // _csrf: req.csrfToken(),
-        });
-      })
-      .catch((err) => {
-        console.log(err);
-        res.status(500).json({
-          message: err,
-          errorFlag: true,
-        });
-      });
+    res.status(200).json({
+      isAuthenticated: true,
+      user: { userId: _id, email, userType },
+      // _csrf: req.csrfToken(),
+    });
   }
 });
 
@@ -123,13 +112,25 @@ router.post("/resend-email-verification", (req, res) => {
         user.emailVerificationEmail();
         res.json({
           errorFlag: false,
-          message: "Email has been sent. Please check your inbox.",
+          message: [
+            {
+              type: "success",
+              title: "Email has been sent",
+              description: "Please check your inbox.",
+            },
+          ],
           // _csrf: req.csrfToken(),
         });
       } else {
         res.json({
           errorFlag: true,
-          message: "Please try again",
+          message: [
+            {
+              type: "error",
+              title: "Something went wrong",
+              description: "Please check your details",
+            },
+          ],
         });
       }
     })
@@ -147,7 +148,13 @@ router.post("/verify-email", (req, res) => {
         .then(() => {
           res.json({
             errorFlag: false,
-            message: "Email has been verified",
+            message: [
+              {
+                type: "success",
+                title: "Email has been verified",
+                description: "Welcome to Laico",
+              },
+            ],
             // _csrf: req.csrfToken(),
           });
         })
@@ -155,14 +162,26 @@ router.post("/verify-email", (req, res) => {
           console.log(e);
           res.json({
             errorFlag: true,
-            message: e.message,
+            message: [
+              {
+                type: "error",
+                title: "Something went wrong",
+                description: "Please check your details",
+              },
+            ],
             // _csrf: req.csrfToken(),
           });
         });
     } else {
       res.json({
         errorFlag: true,
-        message: "Please try again",
+        message: [
+          {
+            type: "error",
+            title: "Something went wrong",
+            description: "Please check your details",
+          },
+        ],
       });
     }
   });
@@ -174,13 +193,25 @@ router.post("/forget-password-reset", (req, res) => {
     if (!user) {
       res.json({
         errorFlag: true,
-        message: "Email not found",
+        message: [
+          {
+            type: "error",
+            title: "Something went wrong",
+            description: "Please check your details",
+          },
+        ],
       });
     }
     user.sendResetPasswordEmail();
     res.json({
       errorFlag: false,
-      message: "Email has been sent. Please check your inbox",
+      message: [
+        {
+          type: "success",
+          title: "Email has been sent",
+          description: "Please check your inbox",
+        },
+      ],
     });
   });
 });
@@ -212,7 +243,13 @@ router.post("/password-reset", (req, res) => {
                 updatedUser.sendResetPasswordNotificationEmail();
                 res.json({
                   errorFlag: false,
-                  message: "Password has been reset",
+                  message: [
+                    {
+                      type: "success",
+                      title: "Password has been reset",
+                      description: "Please relogin",
+                    },
+                  ],
                 });
               });
           })
@@ -220,7 +257,13 @@ router.post("/password-reset", (req, res) => {
       } else {
         res.json({
           errorFlag: true,
-          message: "Invalid URL",
+          message: [
+            {
+              type: "error",
+              title: "Link has been invalidated",
+              description: "Please resend the email",
+            },
+          ],
         });
       }
     })
