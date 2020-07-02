@@ -40,6 +40,9 @@ const UsersSchema = mongoose.Schema(
     resetPasswordExpiry: {
       type: Number,
     },
+    stripeCsrfToken: {
+      type: String,
+    },
   },
   {
     timestamps: true,
@@ -80,6 +83,20 @@ class Users extends promiseBasedQueries {
 
     return promise.promise;
   }
+
+  generateStripeConnectUrl() {
+    let promise = q.defer();
+    const csrfToken = randomBytes(48).toString("hex");
+    this.stripeCsrfToken = csrfToken;
+    const clientId = "ca_HZAC21mucPHiYDG2ROjdZ7UKGLWtqGnz";
+    const capabilities = "suggested_capabilities[]=transfers";
+    const userPrefill = `stripe_user[email]=${this.email}`;
+    const stripeConnectUrl = `https://connect.stripe.com/express/oauth/authorize?client_id=${clientId}&state=${csrfToken}&${capabilities}&${userPrefill}`;
+    console.log(stripeConnectUrl);
+    promise.resolve(stripeConnectUrl);
+    return promise.promise;
+  }
+
   emailVerificationEmail() {
     const verificationToken = randomBytes(48).toString("hex");
     const expiryDate = moment().add(10, "minutes").unix();
@@ -99,6 +116,22 @@ class Users extends promiseBasedQueries {
         subject: "Sending with Twilio SendGrid is Fun",
         text: "and easy to do anywhere, even with Node.js",
         html: `<strong>${urlLink}</strong>`,
+        // templateId: "d-243646a081984a49aa7fb8372a2f6728",
+        // dynamic_template_data: {
+        //   name: "John",
+        //   product: [
+        //     {
+        //       productName: "test",
+        //       quantity: "test",
+        //       price: "test",
+        //     },
+        //     {
+        //       productName: "test2",
+        //       quantity: "test2",
+        //       price: "test2",
+        //     },
+        //   ],
+        // },
       };
       sgMail.send(msg).catch((error) => {
         //Log friendly error

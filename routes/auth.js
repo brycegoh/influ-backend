@@ -11,7 +11,7 @@ require("dotenv").config();
 router.post(
   "/register",
   [
-    body("username").isEmail().withMessage("Invalid Email").normalizeEmail(),
+    body("email").isEmail().withMessage("Invalid Email").normalizeEmail(),
     body("password")
       .isLength({ min: 8 })
       .withMessage("must be at least 8 chars long")
@@ -46,11 +46,24 @@ router.post(
             ._save()
             .then((userData) => {
               userData.emailVerificationEmail();
-              res.status(201).json({
-                message: "Account created successfully",
-                errorFlag: false,
-                // _csrf: req.csrfToken(),
-              });
+              return userData
+                .generateStripeConnectUrl()
+                .then((stripeConnect) => {
+                  res.status(201).json({
+                    message: [
+                      {
+                        type: "success",
+                        title: "Account created",
+                        description: "Proceed to register with stripe",
+                      },
+                    ],
+                    errorFlag: false,
+                    payload: {
+                      stripeConnect: stripeConnect,
+                    },
+                    // _csrf: req.csrfToken(),
+                  });
+                });
             })
             .catch((e) => {
               console.log(e);
